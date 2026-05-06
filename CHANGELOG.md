@@ -38,3 +38,6 @@
 - Implemented OP_ST
 - Added PC-relative memory access
 - Added memory load/store testing
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/056b4646-6854-49e3-9021-61d82c1d5138" />
+</p>
