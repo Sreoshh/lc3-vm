@@ -13,15 +13,23 @@
 - Added sign extension
 - Added condition flag updates
 - Added manual instruction testing
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9decf426-7d2e-468d-934a-60cdd3d56e37" />
+</p>
 ---
 
 ## [v0.3] - Logical Instructions
 - Implemented OP_AND
 - Implemented OP_NOT
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/8f932865-dc35-4d61-aabd-22d22bb5c8f0" />
+</p>
 ---
 
 ## [v0.4] - Memory Operations
 - Implemented OP_LD
 - Added PC-relative addressing
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/af0855cd-a75b-43f6-b8e0-d8e49228bae5" />
+</p>
+---
