@@ -41,3 +41,21 @@
 <p align="center">
   <img src="https://github.com/user-attachments/assets/056b4646-6854-49e3-9021-61d82c1d5138" />
 </p>
+---
+
+## [v0.6] - Base Register Addressing
+
+- Implemented OP_LDR
+- Implemented OP_STR
+- Added base register + offset memory addressing
+- Added memory pointer style access
+- Added testing for register-relative load/store operations
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/13256f06-9d17-42d7-9ebd-ca6f5883da32" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/7c7a595a-c400-4aa0-9d6a-70df97a5315b" />
+</p>
+---
+
