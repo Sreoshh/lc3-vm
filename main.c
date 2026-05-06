@@ -102,12 +102,13 @@ int main(int argc, char* argv[])
     reg[R_PC] = 0x3000;
 
     /* TEST PROGRAM */
-    /* Test value stored in memory */
-memory[0x3001] = 123;
+    /* Value to store */
+    reg[R_R0] = 99;
 
-/* LD R0, #0 */
-memory[0x3000] = 0x2000;
-
+/*
+   ST R0, #0
+*/
+   memory[0x3000] = 0x3000;
 
     /*FETCH-DECODE-EXECUTE LOOP*/
 
@@ -231,6 +232,34 @@ case OP_LD:
 
     break;
 }
+
+/*Format:
+ST SR, PCoffset9
+Meaning:
+memory[PC+offset]=SR
+So instead of loading FROM memory,
+you STORE INTO memory.*/
+
+case OP_ST:
+{
+    /* Source register */
+    uint16_t r0 = (instr >> 9) & 0x7;
+
+    /* PC-relative offset */
+    uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+
+    /* Store register value into memory */
+    memory[reg[R_PC] + pc_offset] = reg[r0];
+
+    printf("Stored value = %d\n", reg[r0]);
+
+    running = 0;
+
+    break;
+}
+    printf("Memory[0x3001] = %d\n", memory[0x3001]);
+
+    
             default:
             {
                 printf("Unknown instruction\n");

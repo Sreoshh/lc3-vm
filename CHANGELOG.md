@@ -33,3 +33,8 @@
   <img src="https://github.com/user-attachments/assets/af0855cd-a75b-43f6-b8e0-d8e49228bae5" />
 </p>
 ---
+
+## [v0.5] - Memory Instructions
+- Implemented OP_ST
+- Added PC-relative memory access
+- Added memory load/store testing
