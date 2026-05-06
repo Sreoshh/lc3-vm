@@ -102,16 +102,14 @@ int main(int argc, char* argv[])
     reg[R_PC] = 0x3000;
 
     /* TEST PROGRAM */
-   /* Value to store */
-reg[R_R0] = 77;
 
-/* Base address */
-reg[R_R1] = 0x4000;
-
+   /* Set condition flag to positive */
+      reg[R_COND] = FL_POS;
 /*
-   STR R0, R1, #1
+   BRp +1
+   Branch if positive
 */
-memory[0x3000] = 0x7041;
+      memory[0x3000] = 0x0201;
 
     /*FETCH-DECODE-EXECUTE LOOP*/
 
@@ -291,6 +289,11 @@ case OP_LDR:
     break;
 }
 
+/*
+STR SR, BaseR, offset6
+Meaning:
+memory[BaseR + offset] = SR */
+
 case OP_STR:
 {
     /* Source register */
@@ -315,6 +318,36 @@ case OP_STR:
     break;
 }
 
+/*
+What BR does?
+Format:
+BR[n][z][p] PCoffset9
+Meaning:
+if condition flag matches:
+PC = PC + offset
+this is important because this is the first instruction using:
+condition flags (N, Z,P) */
+
+case OP_BR:
+{
+    /* Extract condition flag bits */
+    uint16_t cond_flag = (instr >> 9) & 0x7;
+
+    /* PC-relative signed offset */
+    uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+
+    /* Check if condition matches */
+    if (cond_flag & reg[R_COND])
+    {
+        reg[R_PC] += pc_offset;
+    }
+
+    printf("PC = 0x%X\n", reg[R_PC]);
+
+    running = 0;
+
+    break;
+}
             default:
             {
                 printf("Unknown instruction\n");
