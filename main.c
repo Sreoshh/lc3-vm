@@ -102,13 +102,16 @@ int main(int argc, char* argv[])
     reg[R_PC] = 0x3000;
 
     /* TEST PROGRAM */
-    /* Value to store */
-    reg[R_R0] = 99;
+   /* Value to store */
+reg[R_R0] = 77;
+
+/* Base address */
+reg[R_R1] = 0x4000;
 
 /*
-   ST R0, #0
+   STR R0, R1, #1
 */
-   memory[0x3000] = 0x3000;
+memory[0x3000] = 0x7041;
 
     /*FETCH-DECODE-EXECUTE LOOP*/
 
@@ -259,7 +262,59 @@ case OP_ST:
 }
     printf("Memory[0x3001] = %d\n", memory[0x3001]);
 
-    
+
+/* LDR format
+LDR DR, BaseR, offset6
+Meaning:
+DR = memory[BaseR + offset] */
+
+case OP_LDR:
+{
+    /* Destination register */
+    uint16_t r0 = (instr >> 9) & 0x7;
+
+    /* Base register */
+    uint16_t r1 = (instr >> 6) & 0x7;
+
+    /* 6-bit signed offset */
+    uint16_t offset = sign_extend(instr & 0x3F, 6);
+
+    /* Load value from memory */
+    reg[r0] = memory[reg[r1] + offset];
+
+    update_flags(r0);
+
+    printf("LDR Result = %d\n", reg[r0]);
+
+    running = 0;
+
+    break;
+}
+
+case OP_STR:
+{
+    /* Source register */
+    uint16_t r0 = (instr >> 9) & 0x7;
+
+    /* Base register */
+    uint16_t r1 = (instr >> 6) & 0x7;
+
+    /* 6-bit signed offset */
+    uint16_t offset = sign_extend(instr & 0x3F, 6);
+
+    /* Store value into memory */
+    memory[reg[r1] + offset] = reg[r0];
+
+    printf("Stored value = %d\n", reg[r0]);
+
+    printf("Memory value = %d\n",
+           memory[reg[r1] + offset]);
+
+    running = 0;
+
+    break;
+}
+
             default:
             {
                 printf("Unknown instruction\n");
