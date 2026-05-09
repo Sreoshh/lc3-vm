@@ -103,13 +103,10 @@ int main(int argc, char* argv[])
 
     /* TEST PROGRAM */
 
-   /* Set condition flag to positive */
-      reg[R_COND] = FL_POS;
-/*
-   BRp +1
-   Branch if positive
+   /*
+   JSR +1
 */
-      memory[0x3000] = 0x0201;
+memory[0x3000] = 0x4801;
 
     /*FETCH-DECODE-EXECUTE LOOP*/
 
@@ -343,6 +340,75 @@ case OP_BR:
     }
 
     printf("PC = 0x%X\n", reg[R_PC]);
+
+    running = 0;
+
+    break;
+}
+
+/*
+What JMP does
+Format: JMP BaseR
+Meaning: PC = BaseR
+
+Why JMP matters
+
+This is the first instruction where: a register directly controls execution flow
+That concept is foundational for:
+functions
+returns
+interpreters
+operating systems
+*/
+case OP_JMP:
+{
+    /* Base register */
+    uint16_t r1 = (instr >> 6) & 0x7;
+
+    /* Jump to address in register */
+    reg[R_PC] = reg[r1];
+
+    printf("Jumped to PC = 0x%X\n", reg[R_PC]);
+
+    running = 0;
+
+    break;
+}
+
+/*What JSR does
+Format: JSR PCoffset11
+
+Meaning: R7 = current PC
+         PC = PC + offset*/
+
+case OP_JSR:
+{
+    /* Save current PC in R7 */
+    reg[R_R7] = reg[R_PC];
+
+    /* Check long flag */
+    uint16_t long_flag = (instr >> 11) & 1;
+
+    if (long_flag)
+    {
+        /* PC-relative offset */
+        uint16_t long_pc_offset =
+            sign_extend(instr & 0x7FF, 11);
+
+        /* Jump to subroutine */
+        reg[R_PC] += long_pc_offset;
+    }
+    else
+    {
+        /* Base register */
+        uint16_t r1 = (instr >> 6) & 0x7;
+
+        reg[R_PC] = reg[r1];
+    }
+
+    printf("JSR Jumped to PC = 0x%X\n", reg[R_PC]);
+    printf("Return Address stored in R7 = 0x%X\n",
+           reg[R_R7]);
 
     running = 0;
 

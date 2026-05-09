@@ -59,3 +59,29 @@
 </p>
 ---
 
+## [v0.8] - Jump Instruction
+
+- Implemented OP_JMP
+- Added register-based control flow
+- Added unconditional jump support
+- Added JMP instruction testing
+
+
+
+## [v0.9] - Subroutine Support
+
+- Implemented OP_JSR
+- Added PC-relative subroutine calls
+- Added return address storage in R7
+- Added subroutine jump testing
+
+1. Fetch instruction
+- After fetch:
+- PC = 0x3001
+2. Save return address
+R7 = 0x3001
+3. Apply offset
+- Offset:
+- +1
+- So:
+- PC = 0x3002
