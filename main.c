@@ -50,6 +50,16 @@ enum
     OP_TRAP      /* Execute Trap */
 };
 
+// Add TRAP vectors enum
+enum
+{
+    TRAP_GETC  = 0x20, /* Get character */
+    TRAP_OUT   = 0x21, /* Output character */
+    TRAP_PUTS  = 0x22, /* Output string */
+    TRAP_IN    = 0x23, /* Input character */
+    TRAP_PUTSP = 0x24, /* Output byte string */
+    TRAP_HALT  = 0x25  /* Halt program */
+};
 
 /* CONDITION FLAGS */
 
@@ -103,9 +113,8 @@ int main(int argc, char* argv[])
 
     /* TEST PROGRAM */
 
-   /*
-   LEA R0, #1 */
-memory[0x3000] = 0xE001;
+   /*TRAP x25*/
+memory[0x3000] = 0xF025;
 
     /*FETCH-DECODE-EXECUTE LOOP*/
 
@@ -440,6 +449,38 @@ case OP_LEA:
            reg[r0]);
 
     running = 0;
+
+    break;
+}
+
+case OP_TRAP:
+{
+    /* Save current PC in R7 */
+    reg[R_R7] = reg[R_PC];
+
+    /* Extract trap vector */
+    uint16_t trap_vect = instr & 0xFF;
+
+    switch (trap_vect)
+    {
+        case TRAP_HALT:
+        {
+            printf("HALT\n");
+
+            running = 0;
+
+            break;
+        }
+
+        default:
+        {
+            printf("Unknown TRAP\n");
+
+            running = 0;
+
+            break;
+        }
+    }
 
     break;
 }
