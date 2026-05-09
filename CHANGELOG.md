@@ -195,3 +195,19 @@ R7 = 0x3001
 <p align="center">
   <img src="https://github.com/user-attachments/assets/3329fd97-19d9-4d48-89be-b8bde8c6fc8d" />
 </p>
+
+
+## [v0.10] - Effective Address Loading
+
+- Implemented OP_LEA
+- Added effective address computation
+- Added PC-relative address loading
+- Added LEA instruction testing
+
+What happens internally
+- Initial:
+- PC = 0x3000
+- After fetch:
+- PC = 0x3001
+- Offset: +1
+- So: R0 = 0x3002

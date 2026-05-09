@@ -104,9 +104,8 @@ int main(int argc, char* argv[])
     /* TEST PROGRAM */
 
    /*
-   JSR +1
-*/
-memory[0x3000] = 0x4801;
+   LEA R0, #1 */
+memory[0x3000] = 0xE001;
 
     /*FETCH-DECODE-EXECUTE LOOP*/
 
@@ -409,6 +408,36 @@ case OP_JSR:
     printf("JSR Jumped to PC = 0x%X\n", reg[R_PC]);
     printf("Return Address stored in R7 = 0x%X\n",
            reg[R_R7]);
+
+    running = 0;
+
+    break;
+}
+
+/*What LEA does
+
+Format: LEA DR, PCoffset9
+Meaning: DR = address
+NOT:
+DR = memory[address]
+That’s the key distinction.*/
+
+case OP_LEA:
+{
+    /* Destination register */
+    uint16_t r0 = (instr >> 9) & 0x7;
+
+    /* PC-relative offset */
+    uint16_t pc_offset =
+        sign_extend(instr & 0x1FF, 9);
+
+    /* Load effective address */
+    reg[r0] = reg[R_PC] + pc_offset;
+
+    update_flags(r0);
+
+    printf("LEA Result (Address) = 0x%X\n",
+           reg[r0]);
 
     running = 0;
 
