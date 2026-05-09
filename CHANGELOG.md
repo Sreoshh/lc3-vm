@@ -211,7 +211,35 @@ What happens internally
 - PC = 0x3001
 - Offset: +1
 - So: R0 = 0x3002
-- <p align="center">
+ <p align="center">
   <img src="https://github.com/user-attachments/assets/e30e823c-88c0-4677-9f83-ba5e9b958073"/>
+</p>
+---
+
+## [v1.0] - Trap Routine Support
+
+- Implemented OP_TRAP
+- Added trap vector decoding
+- Implemented TRAP HALT (x25)
+- Added VM halt functionality
+
+What happens internally
+
+- Instruction: F025
+- Breakdown:
+- Part	     |     Meaning
+- F	         |    TRAP opcode
+- 25	       |   HALT vector
+- VM does:
+- trap_vect = 0x25
+- Matches:
+TRAP_HALT
+
+- Then:
+- running = 0
+- Program stops.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/25dae7b6-0796-4493-8977-11895a36771c"/>
 </p>
 ---
