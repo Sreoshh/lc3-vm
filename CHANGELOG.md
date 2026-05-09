@@ -144,34 +144,6 @@ Purpose
 
 ---
 
-<<<<<<< HEAD
-## [v0.8] - Jump Instruction
-
-- Implemented OP_JMP
-- Added register-based control flow
-- Added unconditional jump support
-- Added JMP instruction testing
-
-
-
-## [v0.9] - Subroutine Support
-
-- Implemented OP_JSR
-- Added PC-relative subroutine calls
-- Added return address storage in R7
-- Added subroutine jump testing
-
-1. Fetch instruction
-- After fetch:
-- PC = 0x3001
-2. Save return address
-R7 = 0x3001
-3. Apply offset
-- Offset:
-- +1
-- So:
-- PC = 0x3002
-=======
 ## [v0.7] - Branch Instruction
 
 - Implemented OP_BR
@@ -191,4 +163,35 @@ R7 = 0x3001
 - offset = 1
 - So final: PC = 0x3002
 
->>>>>>> 3efff29948aa49b0a126bddcccd1b06c13453425
+
+## [v0.8] - Jump Instruction
+
+- Implemented OP_JMP
+- Added register-based control flow
+- Added unconditional jump support
+- Added JMP instruction testing
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a45235b5-36c0-487e-acef-3f6142363621" />
+</p>
+
+
+## [v0.9] - Subroutine Support
+
+- Implemented OP_JSR
+- Added PC-relative subroutine calls
+- Added return address storage in R7
+- Added subroutine jump testing
+
+1. Fetch instruction
+- After fetch:
+- PC = 0x3001
+2. Save return address
+R7 = 0x3001
+3. Apply offset
+- Offset:
+- +1
+- So:
+- PC = 0x3002
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/3329fd97-19d9-4d48-89be-b8bde8c6fc8d" />
+</p>
