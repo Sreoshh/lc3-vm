@@ -195,7 +195,7 @@ R7 = 0x3001
 <p align="center">
   <img src="https://github.com/user-attachments/assets/3329fd97-19d9-4d48-89be-b8bde8c6fc8d" />
 </p>
-
+---
 
 ## [v0.10] - Effective Address Loading
 
@@ -211,3 +211,7 @@ What happens internally
 - PC = 0x3001
 - Offset: +1
 - So: R0 = 0x3002
+- <p align="center">
+  <img src="https://github.com/user-attachments/assets/e30e823c-88c0-4677-9f83-ba5e9b958073"/>
+</p>
+---
