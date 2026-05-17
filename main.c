@@ -113,8 +113,23 @@ int main(int argc, char* argv[])
 
     /* TEST PROGRAM */
 
-   /*TRAP x25*/
-memory[0x3000] = 0xF025;
+/* Store string starting at x4000 */
+
+memory[0x4000] = 'H';
+memory[0x4001] = 'E';
+memory[0x4002] = 'L';
+memory[0x4003] = 'L';
+memory[0x4004] = 'O';
+memory[0x4005] = 0;
+
+/* R0 points to string */
+reg[R_R0] = 0x4000;
+
+/* TRAP x22 (PUTS) */
+memory[0x3000] = 0xF022;
+
+/* TRAP x25 (HALT) */
+memory[0x3001] = 0xF025;
 
     /*FETCH-DECODE-EXECUTE LOOP*/
 
@@ -472,20 +487,35 @@ case OP_TRAP:
             break;
         }
 
-        default:
+        /*
+        PUTS lets the VM print an entire string.
+
+         This is one of the most commonly used LC-3 trap routines.
+          What TRAP x22 does
+
+          Meaning: print a null-terminated string
+
+          The string address is stored in: R0
+         How LC-3 strings work
+         Each memory location stores: one ASCII character
+         String ends when: 0x0000 is encountered. */
+
+         case TRAP_PUTS:
+{
+         /* Pointer to characters */
+         uint16_t* c = memory + reg[R_R0];
+
+         /* Print characters until null terminator */
+        while (*c)
         {
-            printf("Unknown TRAP\n");
-
-            running = 0;
-
+            putc((char)*c, stdout);
+            ++c;}
+            fflush(stdout);
             break;
         }
     }
-
-    break;
-}
-            default:
-            {
+    default:
+    {
                 printf("Unknown instruction\n");
                 running = 0;
                 break;
@@ -495,3 +525,4 @@ case OP_TRAP:
 
     return 0;
 }
+    }

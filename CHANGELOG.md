@@ -243,3 +243,31 @@ TRAP_HALT
   <img src="https://github.com/user-attachments/assets/25dae7b6-0796-4493-8977-11895a36771c"/>
 </p>
 ---
+
+## [v1.1] - Console Output Support
+
+- Implemented TRAP OUT (x21)
+- Added character output support
+- Added terminal interaction
+- Added output trap testing
+
+
+## [v1.2] - String Output Support
+
+- Implemented TRAP PUTS (x22)
+- Added null terminated string printing
+- Added memory based string traversal
+- Added terminal string output testing
+
+What happens internally
+1. VM executes:
+TRAP x22
+2. VM reads address from R0
+R0 = 0x4000
+3. VM starts reading memory
+memory[0x4000] = 'H'
+memory[0x4001] = 'E'
+4. Characters printed one-by-one
+HELLO
+5. VM stops at: 0x0000 (null terminator)
+
