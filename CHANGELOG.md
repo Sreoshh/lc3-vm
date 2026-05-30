@@ -167,7 +167,7 @@ Purpose
 ## [v0.8] - Jump Instruction
 
 - Implemented OP_JMP
-- Added register-based control flow
+- Added register based control flow
 - Added unconditional jump support
 - Added JMP instruction testing
 <p align="center">
@@ -250,7 +250,7 @@ TRAP_HALT
 - Added character output support
 - Added terminal interaction
 - Added output trap testing
-
+---
 
 ## [v1.2] - String Output Support
 
@@ -270,4 +270,43 @@ memory[0x4001] = 'E'
 4. Characters printed one-by-one
 HELLO
 5. VM stops at: 0x0000 (null terminator)
+---
 
+## [v1.3] - Keyboard Input Support
+
+- Implemented TRAP GETC (x20)
+- Added keyboard character input
+- Added input-to-output testing
+- Added terminal interaction support
+---
+
+
+## [v1.4] - Interactive Input Support
+
+- Implemented TRAP GETC (x20)
+- Implemented TRAP IN (x23)
+- Added keyboard character input
+- Added automatic input echoing
+- Added terminal interaction support
+
+Step by Step-
+VM starts
+LC-3 VM starting...
+Executes: TRAP x23
+(IN)
+Prints prompt:
+Enter a character:
+You type: A
+VM stores 'A' in: reg[R_R0]
+VM echoes the character: A
+Program ends because the next instruction is: TRAP x25
+(HALT)
+---
+
+## [v1.6] - Packed String Output
+
+- Implemented TRAP PUTSP (x24)
+- Added packed string output support
+- Added dual-character memory decoding
+- Added PUTSP instruction testing
+---

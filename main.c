@@ -112,24 +112,14 @@ int main(int argc, char* argv[])
     reg[R_PC] = 0x3000;
 
     /* TEST PROGRAM */
+memory[0x4000] = ('H') | ('E' << 8);
+memory[0x4001] = ('L') | ('L' << 8);
+memory[0x4002] = ('O');
 
-/* Store string starting at x4000 */
-
-memory[0x4000] = 'H';
-memory[0x4001] = 'E';
-memory[0x4002] = 'L';
-memory[0x4003] = 'L';
-memory[0x4004] = 'O';
-memory[0x4005] = 0;
-
-/* R0 points to string */
 reg[R_R0] = 0x4000;
 
-/* TRAP x22 (PUTS) */
-memory[0x3000] = 0xF022;
-
-/* TRAP x25 (HALT) */
-memory[0x3001] = 0xF025;
+memory[0x3000] = 0xF024; /* PUTSP */
+memory[0x3001] = 0xF025; /* HALT */
 
     /*FETCH-DECODE-EXECUTE LOOP*/
 
@@ -184,345 +174,383 @@ memory[0x3001] = 0xF025;
             }
 
             case OP_AND:
-{
-    uint16_t r0 = (instr >> 9) & 0x7;
-    uint16_t r1 = (instr >> 6) & 0x7;
-    uint16_t imm_flag = (instr >> 5) & 0x1;
-
-    if (imm_flag)
-    {
-        uint16_t imm5 = sign_extend(instr & 0x1F, 5);
-        reg[r0] = reg[r1] & imm5;
-    }
-    else
-    {
-        uint16_t r2 = instr & 0x7;
-        reg[r0] = reg[r1] & reg[r2];
-    }
-
-    update_flags(r0);
-
-    printf("AND Result = %d\n", reg[r0]);
-
-    running = 0;
-
-    break;
-}
-
-
-case OP_NOT:
-{
-    uint16_t r0 = (instr >> 9) & 0x7;
-    uint16_t r1 = (instr >> 6) & 0x7;
-
-    reg[r0] = ~reg[r1];
-
-    update_flags(r0);
-
-    printf("NOT Result = %d\n", reg[r0]);
-
-    running = 0;
-
-    break;
-}
-
-/*LD = Load from memory into a register.
-What LD does
-Format:
-LD DR, PCoffset9
-Meaning:
-DR = memory[PC + offset]*/
-
-case OP_LD:
-{
-    /* Destination register */
-    uint16_t r0 = (instr >> 9) & 0x7;
-
-    /* PC offset (9-bit signed value) */
-    uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
-
-    /* Load value from memory */
-    reg[r0] = memory[reg[R_PC] + pc_offset];
-
-    /* Update condition flags */
-    update_flags(r0);
-
-    printf("LD Result = %d\n", reg[r0]);
-
-    running = 0;
-
-    break;
-}
-
-/*Format:
-ST SR, PCoffset9
-Meaning:
-memory[PC+offset]=SR
-So instead of loading FROM memory,
-you STORE INTO memory.*/
-
-case OP_ST:
-{
-    /* Source register */
-    uint16_t r0 = (instr >> 9) & 0x7;
-
-    /* PC-relative offset */
-    uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
-
-    /* Store register value into memory */
-    memory[reg[R_PC] + pc_offset] = reg[r0];
-
-    printf("Stored value = %d\n", reg[r0]);
-
-    running = 0;
-
-    break;
-}
-    printf("Memory[0x3001] = %d\n", memory[0x3001]);
-
-
-/* LDR format
-LDR DR, BaseR, offset6
-Meaning:
-DR = memory[BaseR + offset] */
-
-case OP_LDR:
-{
-    /* Destination register */
-    uint16_t r0 = (instr >> 9) & 0x7;
-
-    /* Base register */
-    uint16_t r1 = (instr >> 6) & 0x7;
-
-    /* 6-bit signed offset */
-    uint16_t offset = sign_extend(instr & 0x3F, 6);
-
-    /* Load value from memory */
-    reg[r0] = memory[reg[r1] + offset];
-
-    update_flags(r0);
-
-    printf("LDR Result = %d\n", reg[r0]);
-
-    running = 0;
-
-    break;
-}
-
-/*
-STR SR, BaseR, offset6
-Meaning:
-memory[BaseR + offset] = SR */
-
-case OP_STR:
-{
-    /* Source register */
-    uint16_t r0 = (instr >> 9) & 0x7;
-
-    /* Base register */
-    uint16_t r1 = (instr >> 6) & 0x7;
-
-    /* 6-bit signed offset */
-    uint16_t offset = sign_extend(instr & 0x3F, 6);
-
-    /* Store value into memory */
-    memory[reg[r1] + offset] = reg[r0];
-
-    printf("Stored value = %d\n", reg[r0]);
-
-    printf("Memory value = %d\n",
-           memory[reg[r1] + offset]);
-
-    running = 0;
-
-    break;
-}
-
-/*
-What BR does?
-Format:
-BR[n][z][p] PCoffset9
-Meaning:
-if condition flag matches:
-PC = PC + offset
-this is important because this is the first instruction using:
-condition flags (N, Z,P) */
-
-case OP_BR:
-{
-    /* Extract condition flag bits */
-    uint16_t cond_flag = (instr >> 9) & 0x7;
-
-    /* PC-relative signed offset */
-    uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
-
-    /* Check if condition matches */
-    if (cond_flag & reg[R_COND])
-    {
-        reg[R_PC] += pc_offset;
-    }
-
-    printf("PC = 0x%X\n", reg[R_PC]);
-
-    running = 0;
-
-    break;
-}
-
-/*
-What JMP does
-Format: JMP BaseR
-Meaning: PC = BaseR
-
-Why JMP matters
-
-This is the first instruction where: a register directly controls execution flow
-That concept is foundational for:
-functions
-returns
-interpreters
-operating systems
-*/
-case OP_JMP:
-{
-    /* Base register */
-    uint16_t r1 = (instr >> 6) & 0x7;
-
-    /* Jump to address in register */
-    reg[R_PC] = reg[r1];
-
-    printf("Jumped to PC = 0x%X\n", reg[R_PC]);
-
-    running = 0;
-
-    break;
-}
-
-/*What JSR does
-Format: JSR PCoffset11
-
-Meaning: R7 = current PC
-         PC = PC + offset*/
-
-case OP_JSR:
-{
-    /* Save current PC in R7 */
-    reg[R_R7] = reg[R_PC];
-
-    /* Check long flag */
-    uint16_t long_flag = (instr >> 11) & 1;
-
-    if (long_flag)
-    {
-        /* PC-relative offset */
-        uint16_t long_pc_offset =
-            sign_extend(instr & 0x7FF, 11);
-
-        /* Jump to subroutine */
-        reg[R_PC] += long_pc_offset;
-    }
-    else
-    {
-        /* Base register */
-        uint16_t r1 = (instr >> 6) & 0x7;
-
-        reg[R_PC] = reg[r1];
-    }
-
-    printf("JSR Jumped to PC = 0x%X\n", reg[R_PC]);
-    printf("Return Address stored in R7 = 0x%X\n",
-           reg[R_R7]);
-
-    running = 0;
-
-    break;
-}
-
-/*What LEA does
-
-Format: LEA DR, PCoffset9
-Meaning: DR = address
-NOT:
-DR = memory[address]
-That’s the key distinction.*/
-
-case OP_LEA:
-{
-    /* Destination register */
-    uint16_t r0 = (instr >> 9) & 0x7;
-
-    /* PC-relative offset */
-    uint16_t pc_offset =
-        sign_extend(instr & 0x1FF, 9);
-
-    /* Load effective address */
-    reg[r0] = reg[R_PC] + pc_offset;
-
-    update_flags(r0);
-
-    printf("LEA Result (Address) = 0x%X\n",
-           reg[r0]);
-
-    running = 0;
-
-    break;
-}
-
-case OP_TRAP:
-{
-    /* Save current PC in R7 */
-    reg[R_R7] = reg[R_PC];
-
-    /* Extract trap vector */
-    uint16_t trap_vect = instr & 0xFF;
-
-    switch (trap_vect)
-    {
-        case TRAP_HALT:
-        {
-            printf("HALT\n");
-
-            running = 0;
-
-            break;
-        }
-
-        /*
-        PUTS lets the VM print an entire string.
-
-         This is one of the most commonly used LC-3 trap routines.
-          What TRAP x22 does
-
-          Meaning: print a null-terminated string
-
-          The string address is stored in: R0
-         How LC-3 strings work
-         Each memory location stores: one ASCII character
-         String ends when: 0x0000 is encountered. */
-
-         case TRAP_PUTS:
-{
-         /* Pointer to characters */
-         uint16_t* c = memory + reg[R_R0];
-
-         /* Print characters until null terminator */
-        while (*c)
-        {
-            putc((char)*c, stdout);
-            ++c;}
-            fflush(stdout);
-            break;
-        }
-    }
-    default:
-    {
-                printf("Unknown instruction\n");
+            {
+                uint16_t r0 = (instr >> 9) & 0x7;
+                uint16_t r1 = (instr >> 6) & 0x7;
+                uint16_t imm_flag = (instr >> 5) & 0x1;
+                
+                if (imm_flag)
+                {
+                    uint16_t imm5 = sign_extend(instr & 0x1F, 5);
+                    reg[r0] = reg[r1] & imm5;
+                }
+                else
+                {
+                    uint16_t r2 = instr & 0x7;
+                    reg[r0] = reg[r1] & reg[r2];
+                }
+                
+                update_flags(r0);
+                printf("AND Result = %d\n", reg[r0]);
+                
                 running = 0;
+                
                 break;
             }
-        }
-    }
+            
+            case OP_NOT:
+            {
+                uint16_t r0 = (instr >> 9) & 0x7;
+                uint16_t r1 = (instr >> 6) & 0x7;
+                
+                reg[r0] = ~reg[r1];
+                
+                update_flags(r0);
+                
+                printf("NOT Result = %d\n", reg[r0]);
+                
+                running = 0;
+                 break;
+                }
+                /*LD = Load from memory into a register.
+                What LD does
+                Format:
+                LD DR, PCoffset9
+                Meaning:
+                DR = memory[PC + offset]*/
+                case OP_LD:
+                {
+                    
+                    /* Destination register */
+                    uint16_t r0 = (instr >> 9) & 0x7;
+                    
+                    /* PC offset (9-bit signed value) */
+                    uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+                    
+                    /* Load value from memory */
+                    reg[r0] = memory[reg[R_PC] + pc_offset];
+                    
+                    /* Update condition flags */
+                    update_flags(r0);
+                    
+                    printf("LD Result = %d\n", reg[r0]);
+                    
+                    running = 0;
+                     break;
+                    }
+                    
+                    /*Format: ST SR, PCoffset9
+                    Meaning: memory[PC+offset]=SR
+                    So instead of loading FROM memory, you STORE INTO memory.*/
+                    
+                    case OP_ST:
+                    {
+                        
+                        /* Source register */
+                        uint16_t r0 = (instr >> 9) & 0x7;
+                        
+                        /* PC-relative offset */
+                        uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+                        
+                        /* Store register value into memory */
+                        memory[reg[R_PC] + pc_offset] = reg[r0];
+                        
+                        printf("Stored value = %d\n", reg[r0]);
+                        
+                        running = 0;
+                        
+                        break;
+                    }
+                    
+                    printf("Memory[0x3001] = %d\n", memory[0x3001]);
+                        
+                        /* LDR format
+                        LDR DR, BaseR, offset6
+                        Meaning: DR = memory[BaseR + offset] */
+                        
+                        case OP_LDR:
+                        {
+                            
+                            /* Destination register */
+                            uint16_t r0 = (instr >> 9) & 0x7;
+                            
+                            /* Base register */
+                            uint16_t r1 = (instr >> 6) & 0x7;
+                            
+                            /* 6-bit signed offset */
+                            uint16_t offset = sign_extend(instr & 0x3F, 6);
+                            
+                            /* Load value from memory */
+                            reg[r0] = memory[reg[r1] + offset];
+                            
+                            update_flags(r0);
+                            
+                            printf("LDR Result = %d\n", reg[r0]);
+                            
+                            running = 0;
+                            break;
+                        
+                        }
 
-    return 0;
-}
-    }
+                        /*
+                        STR SR, BaseR, offset6
+                        Meaning: memory[BaseR + offset] = SR */
+                        
+                        case OP_STR:
+                        {
+                            
+                            /* Source register */
+                             uint16_t r0 = (instr >> 9) & 0x7;
+                             
+                             /* Base register */
+                             uint16_t r1 = (instr >> 6) & 0x7;
+                             
+                             /* 6-bit signed offset */
+                             uint16_t offset = sign_extend(instr & 0x3F, 6);
+                             
+                             /* Store value into memory */
+                             memory[reg[r1] + offset] = reg[r0];
+                             
+                             printf("Stored value = %d\n", reg[r0]);
+                             printf("Memory value = %d\n", memory[reg[r1] + offset]);
+                             
+                             running = 0;
+                             
+                             break;
+                            }
+                            
+                            /*
+                            What BR does?
+                            Format: BR[n][z][p] PCoffset9
+                            Meaning: if condition flag matches:
+                            PC = PC + offset
+                            this is important because this is the first instruction using:
+                            condition flags (N, Z,P) */
+                            
+                            case OP_BR:
+                            {
+                                
+                                /* Extract condition flag bits */
+                                uint16_t cond_flag = (instr >> 9) & 0x7;
+                                
+                                /* PC-relative signed offset */
+                                uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+
+                                /* Check if condition matches */
+                                if (cond_flag & reg[R_COND])
+                                {
+                                    reg[R_PC] += pc_offset;
+                                 }
+                                 printf("PC = 0x%X\n", reg[R_PC]);
+                                 running = 0;
+                                 break;
+                                }
+                                /*
+                                What JMP does
+                                Format: JMP BaseR
+                                Meaning: PC = BaseR
+                                Why JMP matters
+                                This is the first instruction where: a register directly controls execution flow
+                                That concept is foundational for:
+                                functions returns interpreters operating systems
+                                */
+                                
+                                case OP_JMP:
+                                {
+                                    
+                                    /* Base register */
+                                    uint16_t r1 = (instr >> 6) & 0x7;
+                                    
+                                    /* Jump to address in register */
+                                    reg[R_PC] = reg[r1];
+                                    printf("Jumped to PC = 0x%X\n", reg[R_PC]);
+
+                                    running = 0;
+                                    
+                                    break;
+                                }
+
+                                /*What JSR does
+                                Format: JSR PCoffset11
+                                Meaning: R7 = current PC
+                                PC = PC + offset*/
+                                
+                                case OP_JSR:
+                                {
+                                    /* Save current PC in R7 */
+                                    reg[R_R7] = reg[R_PC];
+                                    
+                                    /* Check long flag */
+                                    uint16_t long_flag = (instr >> 11) & 1;
+                                    
+                                    if (long_flag)
+                                    {
+                                        /* PC-relative offset */
+                                        uint16_t long_pc_offset = sign_extend(instr & 0x7FF, 11);
+                                        
+                                        /* Jump to subroutine */
+                                        reg[R_PC] += long_pc_offset;
+                                    }
+                                    
+                                    else
+                                    {
+                                        /* Base register */
+                                        uint16_t r1 = (instr >> 6) & 0x7;
+                                        reg[R_PC] = reg[r1];
+                                     }
+                                     
+                                     printf("JSR Jumped to PC = 0x%X\n", reg[R_PC]);
+                                     printf("Return Address stored in R7 = 0x%X\n", reg[R_R7]);
+                                     
+                                     running = 0;
+                                     
+                                     break;
+                                    }
+                                    
+                                    /*What LEA does
+                                    Format: LEA DR, PCoffset9
+                                    Meaning: DR = address
+                                    NOT:
+                                    DR = memory[address]
+                                    That’s the key distinction.*/
+                                    
+                                    case OP_LEA:
+                                    {
+                                        /* Destination register */
+                                        uint16_t r0 = (instr >> 9) & 0x7;
+                                        
+                                        /* PC-relative offset */
+                                        uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+                                        
+                                        /* Load effective address into register */
+                                        reg[r0] = reg[R_PC] + pc_offset;
+                                        
+                                        update_flags(r0);
+                                        
+                                        printf("LEA Loaded Address = 0x%X\n", reg[r0]);
+                                        
+                                        running = 0;
+                                        break;
+                                    }
+                                    case OP_TRAP:
+                                    {
+                                        /* Save current PC in R7 */
+                                        reg[R_R7] = reg[R_PC];
+                                        
+                                        /* Extract trap vector */
+                                        uint16_t trap_vect = instr & 0xFF;
+                                        
+                                        switch (trap_vect)
+                                        {
+                                            case TRAP_HALT:
+                                            {
+                                                printf("HALT\n");
+                                                
+                                                running = 0;
+                                                
+                                                break;
+                                            }
+                                            /*
+                                            PUTS lets the VM print an entire string.
+                                            This is one of the most commonly used LC-3 trap routines.
+                                            What TRAP x22 does
+                                            Meaning: print a null-terminated string
+                                            The string address is stored in: R0
+                                            How LC-3 strings work
+                                            Each memory location stores: one ASCII character
+                                            String ends when: 0x0000 is encountered. */
+                                            
+                                            case TRAP_PUTS:
+                                            {
+                                                
+                                                /* Pointer to characters */
+                                                uint16_t* c = memory + reg[R_R0];
+                                                
+                                                /* Print characters until null terminator */
+                                                while (*c)
+                                                {
+                                                    putc((char)*c, stdout);
+                                                    ++c;
+                                                }
+                                                fflush(stdout);
+                                                 break;
+                                                 }
+                                                 
+                                                 /*
+                                                 What TRAP x20 does
+                                                 Meaning: read one character from keyboard and store it in: R0
+                                                 No echo to screen yet.
+                                                 */
+                                                 
+                                                 case TRAP_GETC:
+                                                 {/* Read single character */
+                                                    reg[R_R0] = (uint16_t)getchar();
+                                                    break;
+                                                }
+                                                
+                                                
+                                                case TRAP_IN:
+                                                {
+                                                    printf("Enter a character: ");
+                                                    char c = getchar();
+                                                    putc(c, stdout);
+                                                    fflush(stdout);
+                                                    
+                                                    reg[R_R0] = (uint16_t)c;
+                                                    
+                                                    break;
+                                                 }
+                                                 /*What PUTSP does
+                                                 PUTS stores: 
+                                                 memory[addr] = 'H'
+                                                memory[addr+1] = 'E'
+                                                One character per memory location.
+                                                
+                                                PUTSP stores:
+                                                memory[addr] = 'H' | ('E'<<8)
+                                                 memory[addr+1] = 'L' | ('L'<<8)
+                                                 memory[addr+2] ='O'
+                                                 
+                                                 Two characters per memory location.
+                                                 This is a more compact string representation.*/
+                                                 
+                                                 
+                                                 case TRAP_PUTSP:
+                                                 {
+
+                                                     /* Pointer to characters (two per memory location) */
+                                                     uint16_t* c = memory + reg[R_R0];
+                                                     
+                                                     while (*c)
+                                                     {
+                                                        char char1 = (*c) & 0xFF;
+                                                        putc(char1, stdout);
+                                                        
+                                                        char char2 = (*c) >> 8;
+                                                         if (char2)
+                                                         {
+                                                             putc(char2, stdout);
+                                                            }
+                                                            
+                                                            ++c;
+                                                        }
+                                                        
+                                                        fflush(stdout);
+                                                        break;
+                                                    
+                                                    }
+                                                    
+                                                    default:
+                                                    {
+                                                        
+                                                        printf("Unknown instruction\n");
+                                                        
+                                                        running = 0;
+                                                        break;
+                                                    }
+                                                }
+                                             }
+                                             return 0;
+                                            }
+                                         }
+                                        }
