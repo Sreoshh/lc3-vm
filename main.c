@@ -71,6 +71,14 @@ enum
 };
 
 
+/* Memory Mapped Registers */
+enum
+{
+    MR_KBSR = 0xFE00, /* Keyboard Status */
+    MR_KBDR = 0xFE02  /* Keyboard Data */
+};
+
+
 /* UTILITY FUNCTIONS */
 
 /*Sign extend immediate value */
@@ -82,6 +90,62 @@ uint16_t sign_extend(uint16_t x, int bit_count)
     }
 
     return x;
+}
+
+uint16_t swap16(uint16_t x)
+{
+    return (x << 8) | (x >> 8);
+}
+
+/*void read_image_file(FILE* file)
+which will:
+Read the origin address from the .obj file.
+Swap endianness using swap16().
+Load the image contents into memory[].
+That's the first step toward:
+
+.\vm.exe hello.obj */
+
+void read_image_file(FILE* file)
+{
+    /* Origin tells where program should be loaded */
+    uint16_t origin;
+
+    fread(&origin, sizeof(origin), 1, file);
+
+    origin = swap16(origin);
+
+    /* Maximum space remaining in memory */
+    uint16_t max_read = UINT16_MAX - origin;
+
+    uint16_t* p = memory + origin;
+
+    size_t read =
+        fread(p, sizeof(uint16_t), max_read, file);
+
+    /* Convert big-endian to little-endian */
+    while (read-- > 0)
+    {
+        *p = swap16(*p);
+        ++p;
+    }
+}
+
+
+int read_image(const char* image_path)
+{
+    FILE* file = fopen(image_path, "rb");
+
+    if (!file)
+    {
+        return 0;
+    }
+
+    read_image_file(file);
+
+    fclose(file);
+
+    return 1;
 }
 
 
@@ -107,6 +171,22 @@ void update_flags(uint16_t r)
 int main(int argc, char* argv[])
 {
     printf("LC-3 VM starting...\n");
+    if (argc < 2)
+    {
+        printf("Usage: vm [image-file]\n");
+        return 2;
+    }
+
+    for (int j = 1; j < argc; ++j)
+{
+    if (!read_image(argv[j]))
+    {
+        printf("Failed to load image: %s\n",
+               argv[j]);
+
+        return 1;
+    }
+}
 
     /* Program starts at x3000 in LC-3 */
     reg[R_PC] = 0x3000;

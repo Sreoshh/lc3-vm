@@ -311,9 +311,17 @@ Program ends because the next instruction is: TRAP x25
 
 - Implemented TRAP PUTSP (x24)
 - Added packed string output support
-- Added dual-character memory decoding
+- Added dual character memory decoding
 - Added PUTSP instruction testing
 <p align="center">
   <img src="https://github.com/user-attachments/assets/b2f875ae-7e12-4311-8db5-17e96fce7ff3" />
 </p>
 ---
+
+## [v1.7] - Image Loading Support
+
+- Added swap16() for endian conversion
+- Implemented read_image_file()
+- Implemented read_image()
+- Added command line image loading support
+- Added object file loading infrastructure
