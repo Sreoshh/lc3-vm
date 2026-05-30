@@ -301,6 +301,10 @@ VM stores 'A' in: reg[R_R0]
 VM echoes the character: A
 Program ends because the next instruction is: TRAP x25
 (HALT)
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/bc1d84e1-a11e-4e33-92cb-cbadc022f274"/>
+</p>
 ---
 
 ## [v1.6] - Packed String Output
@@ -309,4 +313,7 @@ Program ends because the next instruction is: TRAP x25
 - Added packed string output support
 - Added dual-character memory decoding
 - Added PUTSP instruction testing
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b2f875ae-7e12-4311-8db5-17e96fce7ff3" />
+</p>
 ---
